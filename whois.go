@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -48,6 +49,8 @@ var availablePatterns = []string{
 	"%% no entries found",
 }
 
+var whoisCache sync.Map
+
 func queryWhois(server, query string) (string, error) {
 	conn, err := net.DialTimeout("tcp", net.JoinHostPort(server, "43"), 5*time.Second)
 	if err != nil {
@@ -74,24 +77,62 @@ func queryWhois(server, query string) (string, error) {
 }
 
 func resolveServer(tld string) (string, error) {
+	if cached, ok := whoisCache.Load(tld); ok {
+		return cached.(string), nil
+	}
+
 	if s, ok := tldServers[tld]; ok {
+		whoisCache.Store(tld, s)
 		return s, nil
 	}
+
 	resp, err := queryWhois("whois.iana.org", tld)
-	if err != nil {
-		return "", err
-	}
-	for _, line := range strings.Split(resp, "\n") {
-		before, after, ok := strings.Cut(strings.ToLower(strings.TrimSpace(line)), "refer:")
-		if !ok || before != "" {
-			continue
-		}
-		after = strings.TrimSpace(after)
-		if after != "" {
-			return after, nil
+	if err == nil {
+		server := parseIANAReferral(resp)
+		if server != "" {
+			whoisCache.Store(tld, server)
+			return server, nil
 		}
 	}
+
+	// ICANN convention fallback: whois.nic.<tld>
+	fallback := "whois.nic." + tld
+	if probeWhois(fallback, tld) {
+		whoisCache.Store(tld, fallback)
+		return fallback, nil
+	}
+
 	return "", fmt.Errorf("no whois server found for tld %q", tld)
+}
+
+func parseIANAReferral(resp string) string {
+	for _, line := range strings.Split(resp, "\n") {
+		lower := strings.ToLower(strings.TrimSpace(line))
+		for _, prefix := range []string{"refer:", "whois:"} {
+			before, after, ok := strings.Cut(lower, prefix)
+			if ok && before == "" {
+				after = strings.TrimSpace(after)
+				if after != "" {
+					return after
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func probeWhois(server, query string) bool {
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(server, "43"), 3*time.Second)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	fmt.Fprintf(conn, "%s\r\n", query)
+	// Read at least one byte to confirm the server speaks WHOIS
+	buf := make([]byte, 1)
+	_, err = conn.Read(buf)
+	return err == nil
 }
 
 func isAvailable(response string) (bool, string) {
