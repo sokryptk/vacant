@@ -70,3 +70,21 @@ curl -X POST {{BASE_URL}}/api/check \
 - **WHOIS fallback**: If no NS records exist, queries the TLD's WHOIS server for confirmation.
 - **Recursive referrals**: Follows registrar referrals up to 3 hops, matching standard `whois` CLI behavior.
 - **Self-healing TLD resolution**: Unknown TLDs are resolved via `whois.iana.org` and cached.
+
+### `GET /api/tlds`
+
+List all delegated TLDs from IANA.
+
+```bash
+curl {{BASE_URL}}/api/tlds
+```
+
+**Response:**
+```json
+{
+  "count": 1437,
+  "tlds": ["aaa", "aarp", "abb", "abbott", "abogado", ...]
+}
+```
+
+Cached for 24 hours.
