@@ -43,11 +43,6 @@ func cmdCheck(args []string) {
 		fmt.Fprintln(os.Stderr, "usage: vacant check <domain> [more...]")
 		os.Exit(1)
 	}
-	if len(args) > 50 {
-		fmt.Fprintln(os.Stderr, "max 50 domains per batch")
-		os.Exit(1)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 

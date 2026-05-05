@@ -1,35 +1,56 @@
-# vacant — Domain Availability Agent API
+# Agent Access
 
-`vacant` checks whether domain names are available for registration. It uses a DNS-first strategy: if a domain has NS records it is assumed registered (fast). If no NS records exist, it falls back to WHOIS for confirmation.
+Add **vacant** as a skill to your LLM agent.
 
-## Endpoints
+## Quick Setup
 
-### `GET /api/health`
+Paste this into your agent session:
 
-Returns service status.
-
-Response:
-```json
-{"status":"ok"}
 ```
+Install and configure vacant by following the instructions here: {{BASE_URL}}/agents.md
+```
+
+## Skill Config
+
+```json
+{
+  "name": "vacant",
+  "description": "Check domain name availability via DNS and WHOIS",
+  "endpoint": "{{BASE_URL}}/api/check",
+  "method": "POST",
+  "headers": { "Content-Type": "application/json" },
+  "body": { "domains": ["example.com"] },
+  "response": {
+    "domain": "string",
+    "available": "boolean",
+    "method": "dns | whois",
+    "reason": "string",
+    "error": "string"
+  }
+}
+```
+
+## API Reference
 
 ### `POST /api/check`
 
-Check one or many domains in a single request.
+Check one or many domains.
 
-Body (single):
-```json
-{"domain":"example.com"}
+**Single domain:**
+```bash
+curl -X POST {{BASE_URL}}/api/check \
+  -H "Content-Type: application/json" \
+  -d '{"domain":"example.com"}'
 ```
 
-Body (batch):
-```json
-{"domains":["example.com","example.io"]}
+**Batch (max 50):**
+```bash
+curl -X POST {{BASE_URL}}/api/check \
+  -H "Content-Type: application/json" \
+  -d '{"domains":["foo.com","bar.io","baz.dev"]}'
 ```
 
-Max 50 domains per request.
-
-Response:
+**Response:**
 ```json
 {
   "results": [
@@ -38,55 +59,14 @@ Response:
       "available": false,
       "method": "dns",
       "reason": "NS records found"
-    },
-    {
-      "domain": "example.io",
-      "available": true,
-      "method": "whois",
-      "reason": "matched \"not found\" on whois.nic.io"
     }
   ]
 }
 ```
 
-Field meanings:
-- `method`: `"dns"` means the decision was made via NS lookup. `"whois"` means a WHOIS server was queried because no NS records existed.
-- `reason`: Human-readable explanation of the result.
-- `error`: Non-empty if the check failed entirely (e.g., WHOIS server unreachable). When `error` is present, `available` reflects the best-effort signal (usually DNS-only).
+## How It Works
 
-### `GET /agents.md`
-
-Returns this document as `text/markdown`.
-
-## curl Examples
-
-Single check:
-```bash
-curl -X POST {{BASE_URL}}/api/check \
-  -H "Content-Type: application/json" \
-  -d '{"domain":"example.com"}'
-```
-
-Batch check:
-```bash
-curl -X POST {{BASE_URL}}/api/check \
-  -H "Content-Type: application/json" \
-  -d '{"domains":["foo.com","bar.io","baz.dev"]}'
-```
-
-## Limits & Caveats
-
-- 50 domains max per batch.
-- Batch concurrency is capped at 5 WHOIS queries in parallel.
-- WHOIS responses are not standardized. Rare TLDs may return ambiguous wording.
-- Unknown TLDs are resolved via `whois.iana.org` referral.
-- WHOIS servers rate-limit aggressively.
-- DNS-first results are strong but not absolute.
-
-## Build & Run
-
-```bash
-cd web && npm install && npm run build
-cd .. && go build
-./vacant serve
-```
+- **DNS first**: If a domain has NS records, it's taken (fast).
+- **WHOIS fallback**: If no NS records exist, queries the TLD's WHOIS server for confirmation.
+- **Recursive referrals**: Follows registrar referrals up to 3 hops, matching standard `whois` CLI behavior.
+- **Self-healing TLD resolution**: Unknown TLDs are resolved via `whois.iana.org` and cached.
