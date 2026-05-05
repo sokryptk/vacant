@@ -31,7 +31,7 @@ docker run -p 8080:8080 vacant
 ## API
 
 ```bash
-curl -X POST localhost:8080/api/check \
+curl -X POST {{BASE_URL}}/api/check \
   -H "Content-Type: application/json" \
   -d '{"domains":["example.com","foo.io"]}'
 ```

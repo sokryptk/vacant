@@ -1,6 +1,6 @@
 # vacant — Domain Availability Agent API
 
-`vacant` checks whether domain names are available for registration. It uses a DNS-first strategy: if a domain has NS records it is assumed registered (fast). If no NS records exist, it falls back to WHOIS for authoritative confirmation.
+`vacant` checks whether domain names are available for registration. It uses a DNS-first strategy: if a domain has NS records it is assumed registered (fast). If no NS records exist, it falls back to WHOIS for confirmation.
 
 ## Endpoints
 
@@ -62,14 +62,14 @@ Returns this document as `text/markdown`.
 
 Single check:
 ```bash
-curl -X POST http://localhost:8080/api/check \
+curl -X POST {{BASE_URL}}/api/check \
   -H "Content-Type: application/json" \
   -d '{"domain":"example.com"}'
 ```
 
 Batch check:
 ```bash
-curl -X POST http://localhost:8080/api/check \
+curl -X POST {{BASE_URL}}/api/check \
   -H "Content-Type: application/json" \
   -d '{"domains":["foo.com","bar.io","baz.dev"]}'
 ```
@@ -78,23 +78,15 @@ curl -X POST http://localhost:8080/api/check \
 
 - 50 domains max per batch.
 - Batch concurrency is capped at 5 WHOIS queries in parallel.
-- WHOIS responses are not standardized. Rare TLDs may return ambiguous wording; the tool matches known "available" phrases but edge cases exist.
-- Unknown TLDs are resolved via `whois.iana.org` referral. This adds an extra round-trip.
-- WHOIS servers rate-limit aggressively. Do not run sustained high-volume checks against the same TLD.
-- DNS-first results are strong but not absolute. A domain without NS records may still be registered (e.g., parked with no nameservers).
+- WHOIS responses are not standardized. Rare TLDs may return ambiguous wording.
+- Unknown TLDs are resolved via `whois.iana.org` referral.
+- WHOIS servers rate-limit aggressively.
+- DNS-first results are strong but not absolute.
 
 ## Build & Run
 
 ```bash
-# 1. Build the frontend
 cd web && npm install && npm run build
-
-# 2. Build the binary (no Go deps beyond stdlib)
 cd .. && go build
-
-# 3. Start the server
 ./vacant serve
-
-# 4. Or use the CLI
-./vacant check example.com foo.com
 ```

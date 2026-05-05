@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/fs"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -14,9 +15,10 @@ import (
 var webFS embed.FS
 
 var (
-	distFS      fs.FS
-	indexHTML   []byte
-	agentsMD    []byte
+	distFS    fs.FS
+	indexHTML []byte
+	agentsMD  []byte
+	readmeMD  []byte
 )
 
 func init() {
@@ -27,6 +29,7 @@ func init() {
 	}
 	indexHTML, _ = fs.ReadFile(distFS, "index.html")
 	agentsMD, _ = fs.ReadFile(distFS, "AGENTS.md")
+	readmeMD, _ = fs.ReadFile(distFS, "README.md")
 }
 
 type checkRequest struct {
@@ -43,6 +46,7 @@ func runServer(addr string) error {
 	mux.HandleFunc("/api/health", handleHealth)
 	mux.HandleFunc("/api/check", handleCheck)
 	mux.HandleFunc("/agents.md", handleAgentsMD)
+	mux.HandleFunc("/readme.md", handleReadmeMD)
 	mux.Handle("/", http.FileServerFS(distFS))
 
 	srv := &http.Server{
@@ -53,18 +57,35 @@ func runServer(addr string) error {
 	return srv.ListenAndServe()
 }
 
+func baseURL(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	return scheme + "://" + r.Host
+}
+
+func renderTemplate(w http.ResponseWriter, r *http.Request, data []byte) {
+	if data == nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	out := strings.ReplaceAll(string(data), "{{BASE_URL}}", baseURL(r))
+	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+	w.Write([]byte(out))
+}
+
 func handleHealth(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status":"ok"}`))
 }
 
-func handleAgentsMD(w http.ResponseWriter, _ *http.Request) {
-	if agentsMD == nil {
-		http.Error(w, "AGENTS.md not found", http.StatusNotFound)
-		return
-	}
-	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	w.Write(agentsMD)
+func handleAgentsMD(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, r, agentsMD)
+}
+
+func handleReadmeMD(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, r, readmeMD)
 }
 
 func handleCheck(w http.ResponseWriter, r *http.Request) {

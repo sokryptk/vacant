@@ -41,21 +41,24 @@ function CopyBlock({ text }: { text: string }) {
   )
 }
 
-const skillConfig = `{
-  "name": "vacant",
-  "description": "Check domain name availability via DNS and WHOIS",
-  "endpoint": "http://localhost:8080/api/check",
-  "method": "POST",
-  "headers": { "Content-Type": "application/json" },
-  "body": { "domains": ["example.com"] },
-  "response": {
-    "domain": "string",
-    "available": "boolean",
-    "method": "dns | whois",
-    "reason": "string",
-    "error": "string"
-  }
-}`
+function skillConfig() {
+  const base = window.location.origin
+  return JSON.stringify({
+    name: "vacant",
+    description: "Check domain name availability via DNS and WHOIS",
+    endpoint: base + "/api/check",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: { domains: ["example.com"] },
+    response: {
+      domain: "string",
+      available: "boolean",
+      method: "dns | whois",
+      reason: "string",
+      error: "string"
+    }
+  }, null, 2)
+}
 
 function App() {
   const [query, setQuery] = useState('')
@@ -140,18 +143,18 @@ function App() {
       <Collapsible title="API Access" open={apiOpen} onToggle={() => setApiOpen(o => !o)}>
         <p>POST <code>/api/check</code> with a JSON body.</p>
         <p>Single domain:</p>
-        <pre><code>{`curl -X POST http://localhost:8080/api/check \\
+        <pre><code>{`curl -X POST ${window.location.origin}/api/check \\
   -H "Content-Type: application/json" \\
   -d '{"domain":"example.com"}'`}</code></pre>
         <p>Batch check:</p>
-        <pre><code>{`curl -X POST http://localhost:8080/api/check \\
+        <pre><code>{`curl -X POST ${window.location.origin}/api/check \\
   -H "Content-Type: application/json" \\
   -d '{"domains":["foo.com","bar.io","baz.dev"]}'`}</code></pre>
       </Collapsible>
 
       <Collapsible title="Add to your agent" open={skillOpen} onToggle={() => setSkillOpen(o => !o)}>
         <p>Copy this block into your agent's skill/tool config:</p>
-        <CopyBlock text={skillConfig} />
+        <CopyBlock text={skillConfig()} />
         <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: '#555' }}>
           Point <code>endpoint</code> to wherever you run vacant.
         </p>
