@@ -14,8 +14,18 @@ type Result struct {
 	Error     string `json:"error,omitempty"`
 }
 
+func stripURL(input string) string {
+	input = strings.ToLower(strings.TrimSpace(input))
+	input = strings.TrimPrefix(input, "http://")
+	input = strings.TrimPrefix(input, "https://")
+	if i := strings.Index(input, "/"); i >= 0 {
+		input = input[:i]
+	}
+	return input
+}
+
 func CheckDomain(ctx context.Context, domain string) Result {
-	domain = strings.ToLower(strings.TrimSpace(domain))
+	domain = stripURL(domain)
 	res := Result{Domain: domain}
 
 	if !looksLikeDomain(domain) {
