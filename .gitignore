@@ -1,0 +1,4 @@
+/vacant
+*.exe
+/web/dist
+/web/node_modules
