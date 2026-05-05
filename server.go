@@ -129,12 +129,7 @@ func handleCheck(w http.ResponseWriter, r *http.Request) {
 		go func(i int, d string) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			defer func() {
-				if recover() != nil {
-					results[i] = Result{Domain: d, Error: "panic during check"}
-				}
-			}()
-			results[i] = CheckDomain(ctx, d)
+			results[i] = checkDomainSafe(ctx, d)
 		}(i, d)
 	}
 	wg.Wait()

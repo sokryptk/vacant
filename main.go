@@ -43,22 +43,25 @@ func cmdCheck(args []string) {
 		fmt.Fprintln(os.Stderr, "usage: vacant check <domain> [more...]")
 		os.Exit(1)
 	}
+	if len(args) > 50 {
+		fmt.Fprintln(os.Stderr, "max 50 domains per batch")
+		os.Exit(1)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	const concurrency = 5
+	sem := make(chan struct{}, concurrency)
 	results := make([]Result, len(args))
 	var wg sync.WaitGroup
 	for i, d := range args {
 		wg.Add(1)
+		sem <- struct{}{}
 		go func(i int, d string) {
 			defer wg.Done()
-			defer func() {
-				if recover() != nil {
-					results[i] = Result{Domain: d, Error: "panic during check"}
-				}
-			}()
-			results[i] = CheckDomain(ctx, d)
+			defer func() { <-sem }()
+			results[i] = checkDomainSafe(ctx, d)
 		}(i, d)
 	}
 	wg.Wait()

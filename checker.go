@@ -93,3 +93,12 @@ func looksLikeDomain(d string) bool {
 	}
 	return true
 }
+
+func checkDomainSafe(ctx context.Context, domain string) (res Result) {
+	defer func() {
+		if recover() != nil {
+			res = Result{Domain: domain, Error: "panic during check"}
+		}
+	}()
+	return CheckDomain(ctx, domain)
+}

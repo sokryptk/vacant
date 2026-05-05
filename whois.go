@@ -132,7 +132,7 @@ func resolveServer(tld string) (string, error) {
 
 	resp, err := queryWhois("whois.iana.org", tld)
 	if err == nil {
-		server := parseIANAReferral(resp)
+		server := extractReferral(resp)
 		if server != "" {
 			whoisCache.Store(tld, server)
 			return server, nil
@@ -149,22 +149,6 @@ func resolveServer(tld string) (string, error) {
 	return "", fmt.Errorf("no whois server found for tld %q", tld)
 }
 
-func parseIANAReferral(resp string) string {
-	for _, line := range strings.Split(resp, "\n") {
-		lower := strings.ToLower(strings.TrimSpace(line))
-		for _, prefix := range []string{"refer:", "whois:"} {
-			before, after, ok := strings.Cut(lower, prefix)
-			if ok && before == "" {
-				after = strings.TrimSpace(after)
-				if after != "" {
-					return after
-				}
-			}
-		}
-	}
-	return ""
-}
-
 func probeWhois(server, query string) bool {
 	conn, err := net.DialTimeout("tcp", net.JoinHostPort(server, "43"), 3*time.Second)
 	if err != nil {
@@ -172,7 +156,9 @@ func probeWhois(server, query string) bool {
 	}
 	defer conn.Close()
 	conn.SetDeadline(time.Now().Add(5 * time.Second))
-	fmt.Fprintf(conn, "%s\r\n", query)
+	if _, err := fmt.Fprintf(conn, "%s\r\n", query); err != nil {
+		return false
+	}
 	// Read at least one byte to confirm the server speaks WHOIS
 	buf := make([]byte, 1)
 	_, err = conn.Read(buf)
