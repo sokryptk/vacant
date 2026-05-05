@@ -51,6 +51,50 @@ var availablePatterns = []string{
 
 var whoisCache sync.Map
 
+var referralPatterns = []string{
+	"registrar whois server:",
+	"referralserver:",
+	"whois server:",
+	"whois:",
+	"refer:",
+}
+
+func extractReferral(response string) string {
+	for _, line := range strings.Split(response, "\n") {
+		lower := strings.ToLower(strings.TrimSpace(line))
+		for _, prefix := range referralPatterns {
+			before, after, ok := strings.Cut(lower, prefix)
+			if !ok || before != "" {
+				continue
+			}
+			after = strings.TrimSpace(after)
+			after = strings.TrimPrefix(after, "whois://")
+			after = strings.TrimPrefix(after, "rwhois://")
+			after = strings.TrimSpace(after)
+			if after != "" {
+				return after
+			}
+		}
+	}
+	return ""
+}
+
+func queryWhoisRecursive(server, query string, depth int) (string, string, error) {
+	const maxDepth = 3
+	resp, err := queryWhois(server, query)
+	if err != nil {
+		return "", server, err
+	}
+	if depth >= maxDepth {
+		return resp, server, nil
+	}
+	next := extractReferral(resp)
+	if next != "" && next != server {
+		return queryWhoisRecursive(next, query, depth+1)
+	}
+	return resp, server, nil
+}
+
 func queryWhois(server, query string) (string, error) {
 	conn, err := net.DialTimeout("tcp", net.JoinHostPort(server, "43"), 5*time.Second)
 	if err != nil {

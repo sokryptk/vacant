@@ -59,7 +59,7 @@ func CheckDomain(ctx context.Context, domain string) Result {
 		return res
 	}
 
-	resp, err := queryWhois(server, domain)
+	resp, finalServer, err := queryWhoisRecursive(server, domain, 0)
 	if err != nil {
 		res.Method = "dns"
 		res.Available = true
@@ -71,9 +71,9 @@ func CheckDomain(ctx context.Context, domain string) Result {
 	res.Method = "whois"
 	res.Available = avail
 	if avail {
-		res.Reason = fmt.Sprintf("matched %q on %s", matched, server)
+		res.Reason = fmt.Sprintf("matched %q on %s", matched, finalServer)
 	} else {
-		res.Reason = fmt.Sprintf("registration record returned by %s", server)
+		res.Reason = fmt.Sprintf("registration record returned by %s", finalServer)
 	}
 	return res
 }
