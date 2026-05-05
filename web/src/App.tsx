@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { checkDomains, fetchAgentsMD, type CheckResult } from './api'
+import { checkDomains, fetchAgentsMD, fetchTLDs, type CheckResult } from './api'
 
 function Status({ result }: { result: CheckResult }) {
   if (result.error) return <span className="badge">error</span>
@@ -69,7 +69,10 @@ function App() {
   const [apiOpen, setApiOpen] = useState(false)
   const [agentOpen, setAgentOpen] = useState(false)
   const [skillOpen, setSkillOpen] = useState(false)
+  const [tldsOpen, setTldsOpen] = useState(false)
   const [agentsMD, setAgentsMD] = useState('')
+  const [tlds, setTlds] = useState<string[] | null>(null)
+  const [tldsError, setTldsError] = useState('')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -98,6 +101,19 @@ function App() {
       }
     }
     setAgentOpen(o => !o)
+  }
+
+  async function toggleTLDs() {
+    if (!tldsOpen && tlds === null) {
+      try {
+        const data = await fetchTLDs()
+        setTlds(data.tlds)
+        setTldsError('')
+      } catch {
+        setTldsError('Unable to load TLDs')
+      }
+    }
+    setTldsOpen(o => !o)
   }
 
   return (
@@ -162,6 +178,20 @@ function App() {
 
       <Collapsible title="Agent Access" open={agentOpen} onToggle={toggleAgent}>
         <pre className="wrap">{agentsMD}</pre>
+      </Collapsible>
+
+      <Collapsible title="Available TLDs" open={tldsOpen} onToggle={toggleTLDs}>
+        {tldsError && <div className="error">{tldsError}</div>}
+        {tlds && (
+          <div>
+            <p style={{ marginTop: 0, fontSize: '0.85rem', color: '#555' }}>
+              {tlds.length.toLocaleString()} TLDs from IANA
+            </p>
+            <pre className="wrap" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {tlds.join(', ')}
+            </pre>
+          </div>
+        )}
       </Collapsible>
     </div>
   )

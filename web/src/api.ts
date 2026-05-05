@@ -29,3 +29,9 @@ export async function fetchAgentsMD(): Promise<string> {
   if (!res.ok) throw new Error('Failed to load agents.md')
   return res.text()
 }
+
+export async function fetchTLDs(): Promise<{ count: number; tlds: string[] }> {
+  const res = await fetch('/api/tlds')
+  if (!res.ok) throw new Error('Failed to load TLDs')
+  return res.json() as Promise<{ count: number; tlds: string[] }>
+}

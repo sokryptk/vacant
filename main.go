@@ -13,7 +13,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: vacant <serve|check> [args]")
+		fmt.Fprintln(os.Stderr, "usage: vacant <serve|check|tlds> [args]")
 		os.Exit(1)
 	}
 	switch os.Args[1] {
@@ -21,6 +21,8 @@ func main() {
 		cmdServe(os.Args[2:])
 	case "check":
 		cmdCheck(os.Args[2:])
+	case "tlds":
+		cmdTLDs(os.Args[2:])
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
 		os.Exit(1)
@@ -73,4 +75,22 @@ func cmdCheck(args []string) {
 	enc.SetIndent("", "  ")
 	enc.Encode(results)
 	os.Exit(exitCode)
+}
+
+func cmdTLDs(args []string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tlds, err := fetchTLDs(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	enc.Encode(map[string]any{
+		"count": len(tlds),
+		"tlds":  tlds,
+	})
 }

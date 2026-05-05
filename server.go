@@ -45,6 +45,7 @@ func runServer(addr string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", handleHealth)
 	mux.HandleFunc("/api/check", handleCheck)
+	mux.HandleFunc("/api/tlds", handleTLDs)
 	mux.HandleFunc("/agents.md", handleAgentsMD)
 	mux.HandleFunc("/readme.md", handleReadmeMD)
 	mux.Handle("/", http.FileServerFS(distFS))
@@ -86,6 +87,26 @@ func handleAgentsMD(w http.ResponseWriter, r *http.Request) {
 
 func handleReadmeMD(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, r, readmeMD)
+}
+
+func handleTLDs(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	tlds, err := fetchTLDs(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"count": len(tlds),
+		"tlds":  tlds,
+	})
 }
 
 func handleCheck(w http.ResponseWriter, r *http.Request) {
