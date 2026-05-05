@@ -55,7 +55,7 @@ func CheckDomain(ctx context.Context, domain string) Result {
 	if err != nil {
 		res.Method = "dns"
 		res.Available = true
-		res.Error = fmt.Sprintf("whois lookup skipped: %v", err)
+		res.Reason = fmt.Sprintf("no NS records; whois lookup skipped: %v", err)
 		return res
 	}
 
@@ -63,7 +63,7 @@ func CheckDomain(ctx context.Context, domain string) Result {
 	if err != nil {
 		res.Method = "dns"
 		res.Available = true
-		res.Error = fmt.Sprintf("whois confirmation failed: %v", err)
+		res.Reason = fmt.Sprintf("no NS records; whois confirmation failed: %v", err)
 		return res
 	}
 

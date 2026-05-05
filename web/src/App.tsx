@@ -3,8 +3,8 @@ import { checkDomains, fetchAgentsMD, type CheckResult } from './api'
 
 function Status({ result }: { result: CheckResult }) {
   if (result.error) return <span className="badge">error</span>
-  if (result.available) return <span className="badge">available</span>
-  return <span className="badge">taken</span>
+  if (result.available) return <span className="badge badge-ok">available</span>
+  return <span className="badge badge-taken">taken</span>
 }
 
 function Collapsible({ title, open, onToggle, children }: {

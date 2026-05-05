@@ -117,6 +117,14 @@ button:disabled {
   font-weight: 500;
 }
 
+.badge-ok {
+  color: #15803d;
+}
+
+.badge-taken {
+  color: #b91c1c;
+}
+
 .error {
   color: #000;
   font-size: 0.9rem;
