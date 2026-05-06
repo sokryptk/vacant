@@ -43,7 +43,35 @@ h1 {
 
 .input-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.input-group input,
+.input-group button {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem 0.75rem;
+  }
+
+  .input-group input,
+  .input-group button {
+    flex: 1 1 100%;
+  }
+
+  .result-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .result-meta {
+    flex-wrap: wrap;
+  }
 }
 
 .input-group input {
