@@ -177,7 +177,10 @@ function App() {
       </Collapsible>
 
       <Collapsible title="Agent Access" open={agentOpen} onToggle={toggleAgent}>
-        <pre className="wrap">{agentsMD}</pre>
+        <p style={{ marginBottom: '0.75rem', fontSize: '0.85rem', color: '#555' }}>
+          Copy and paste this into your agent's chat to install the skill:
+        </p>
+        <CopyBlock text={agentsMD} />
       </Collapsible>
 
       <Collapsible title="Available TLDs" open={tldsOpen} onToggle={toggleTLDs}>
