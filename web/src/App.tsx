@@ -144,7 +144,15 @@ function App() {
           <div className="results">
             {results.map(r => (
               <div className="result-row" key={r.domain}>
-                <span className="result-domain">{r.domain}</span>
+                <span className="result-domain">
+                  {!r.available && !r.error ? (
+                    <a href={`https://${r.domain}`} target="_blank" rel="noopener noreferrer">
+                      {r.domain}
+                    </a>
+                  ) : (
+                    r.domain
+                  )}
+                </span>
                 <span className="result-meta">
                   <Status result={r} />
                   <span className="badge">{r.method}</span>
