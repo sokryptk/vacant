@@ -54,15 +54,15 @@ func CheckDomain(ctx context.Context, domain string) Result {
 	server, err := resolveServer(tld)
 	if err != nil {
 		res.Method = "dns"
-		res.Available = true
-		res.Reason = fmt.Sprintf("no NS records; whois lookup skipped: %v", err)
+		res.Error = "no whois server available"
+		res.Reason = "check your tld again"
 		return res
 	}
 
 	resp, finalServer, err := queryWhoisRecursive(server, domain, 0)
 	if err != nil {
 		res.Method = "dns"
-		res.Available = true
+		res.Error = "whois query failed"
 		res.Reason = fmt.Sprintf("no NS records; whois confirmation failed: %v", err)
 		return res
 	}
