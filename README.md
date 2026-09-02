@@ -30,6 +30,8 @@ docker run -p 8080:8080 vacant
 
 ## API
 
+Each request can check up to 1,000 domains.
+
 ```bash
 curl -X POST {{BASE_URL}}/api/check \
   -H "Content-Type: application/json" \

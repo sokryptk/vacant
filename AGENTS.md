@@ -43,7 +43,7 @@ curl -X POST {{BASE_URL}}/api/check \
   -d '{"domain":"example.com"}'
 ```
 
-**Batch (max 50):**
+**Batch (max 1000):**
 ```bash
 curl -X POST {{BASE_URL}}/api/check \
   -H "Content-Type: application/json" \

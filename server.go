@@ -41,6 +41,8 @@ type checkResponse struct {
 	Results []Result `json:"results"`
 }
 
+const maxDomainsPerRequest = 1000
+
 func runServer(addr string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", handleHealth)
@@ -131,8 +133,8 @@ func handleCheck(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "provide 'domain' or 'domains'", http.StatusBadRequest)
 		return
 	}
-	if len(domains) > 50 {
-		http.Error(w, "max 50 domains per batch", http.StatusBadRequest)
+	if len(domains) > maxDomainsPerRequest {
+		http.Error(w, "max 1000 domains per batch", http.StatusBadRequest)
 		return
 	}
 

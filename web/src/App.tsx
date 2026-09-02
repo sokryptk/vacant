@@ -82,7 +82,7 @@ function App() {
     setError('')
     setResults(null)
     try {
-      const res = await checkDomains(raw.slice(0, 50))
+      const res = await checkDomains(raw.slice(0, 1000))
       setResults(res)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Check failed')
@@ -135,7 +135,7 @@ function App() {
               {loading ? 'Checking…' : 'Check'}
             </button>
           </div>
-          <p className="hint">Separate multiple domains with commas or newlines. Max 50.</p>
+          <p className="hint">Separate multiple domains with commas or newlines. Max 1,000.</p>
         </form>
 
         {error && <div className="error">{error}</div>}
